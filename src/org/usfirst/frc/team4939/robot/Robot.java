@@ -7,11 +7,18 @@
 
 package org.usfirst.frc.team4939.robot;
 
+import edu.wpi.first.wpilibj.Compressor;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.command.Scheduler;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
+import org.usfirst.frc.team4939.robot.commands.BaselineAuto;
+import org.usfirst.frc.team4939.robot.commands.CenterStartAuto;
+import org.usfirst.frc.team4939.robot.commands.LeftStartAuto;
+import org.usfirst.frc.team4939.robot.commands.RightStartAuto;
 import org.usfirst.frc.team4939.robot.subsystems.Drivetrain;
 import org.usfirst.frc.team4939.robot.subsystems.IntakeSubsystem;
 import org.usfirst.frc.team4939.robot.subsystems.PlatformSubsystem;
@@ -28,6 +35,9 @@ public class Robot extends IterativeRobot {
 	public static final PlatformSubsystem platform = new PlatformSubsystem();
 	public static final IntakeSubsystem intake = new IntakeSubsystem();
 	public static OI m_oi;
+	public static Compressor compressor;
+	public String gameData;
+	public char direction;
 
 	Command m_autonomousCommand;
 	SendableChooser<Command> m_chooser = new SendableChooser<>();
@@ -42,6 +52,10 @@ public class Robot extends IterativeRobot {
 //		m_chooser.addDefault("Default Auto", new ExampleCommand());
 		// chooser.addObject("My Auto", new MyAutoCommand());
 		SmartDashboard.putData("Auto mode", m_chooser);
+		m_chooser.addDefault("Reach Baseline", new BaselineAuto());
+		m_chooser.addObject("Right Start", new RightStartAuto(direction));
+		m_chooser.addObject("Center Start", new CenterStartAuto(direction));
+		m_chooser.addObject("Left Start", new LeftStartAuto(direction));
 	}
 
 	/**
@@ -72,6 +86,8 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void autonomousInit() {
+		gameData = DriverStation.getInstance().getGameSpecificMessage();
+		direction = gameData.charAt(0);
 		m_autonomousCommand = m_chooser.getSelected();
 
 		/*
@@ -93,6 +109,7 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void autonomousPeriodic() {
 		Scheduler.getInstance().run();
+		compressor.stop();
 	}
 
 	@Override
@@ -112,6 +129,7 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void teleopPeriodic() {
 		Scheduler.getInstance().run();
+		compressor.start();
 	}
 
 	/**

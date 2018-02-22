@@ -6,13 +6,16 @@ import org.usfirst.frc.team4939.robot.commands.TankDrive;
 
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.kauailabs.navx.frc.AHRS;
+
 import org.usfirst.frc.team4939.robot.ElectricalConstants;
+//import org.usfirst.frc.team4939.robot.ElectricalConstants;
 import org.usfirst.frc.team4939.robot.NumberConstants;
+import org.usfirst.frc.team4939.robot.subsystems.PIDController;
 
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Encoder;
-import edu.wpi.first.wpilibj.PIDController;
+//import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.SerialPort;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.command.Subsystem;
@@ -26,14 +29,21 @@ public class Drivetrain extends Subsystem {
 	public static WPI_TalonSRX leftsidedriveback= new WPI_TalonSRX(RobotMap.leftDriveBack);
 	public static WPI_TalonSRX rightsidedrivefront= new WPI_TalonSRX(RobotMap.rightDriveFront);
     public static WPI_TalonSRX rightsidedriveback= new WPI_TalonSRX(RobotMap.rightDriveBack);
+    
+    
+    
+    /** Encoders on the drive */
 	private Encoder leftDriveEncoder;
 	private Encoder rightDriveEncoder;
-	
+
 	/** The drive PID controller. */
 	public PIDController drivePID;
 
 	/** The gyro PID controller. */
 	public PIDController gyroPID;
+//    public WPI_TalonSRX lights = new WPI_TalonSRX(RobotMap.lights);
+   
+    //double kp = 0.008;
     
     static final double kP = 0.03;
     static final double kI = 0.00;
@@ -76,9 +86,6 @@ public class Drivetrain extends Subsystem {
 //        /* Typically, only the P value needs to be modified.                   */
 //        LiveWindow.addActuator("DriveSystem", "RotateController", turnController);
     
-    // Put methods for controlling this subsystem
-    // here. Call these from Commands.
-	// Initialize Encoders
     	// Initialize Encoders
     			leftDriveEncoder = new Encoder(ElectricalConstants.LEFT_DRIVE_ENCODER_A,
     					ElectricalConstants.LEFT_DRIVE_ENCODER_B, ElectricalConstants.leftDriveTrainEncoderReverse,
@@ -92,24 +99,183 @@ public class Drivetrain extends Subsystem {
 
     			rightDriveEncoder.setDistancePerPulse(ElectricalConstants.driveEncoderDistPerTick);
 				
-    		// Initialize PID controllers
-    	    //    drivePID = new PIDController(NumberConstants.pDrive, NumberConstants.iDrive, NumberConstants.dDrive);
-    		//	gyroPID = new PIDController(NumberConstants.pGyro, NumberConstants.iGyro, NumberConstants.dGyro);
+    			// Initialize PID controllers
+    			drivePID = new PIDController(NumberConstants.pDrive, NumberConstants.iDrive, NumberConstants.dDrive);
+    			gyroPID = new PIDController(NumberConstants.pGyro, NumberConstants.iGyro, NumberConstants.dGyro);
     		}
 
     		/**
     		 * Sets the command TankDrive as the default command for this subsystem.
     		 */
-    public void runleftsidedrive(double leftdrivestick)
-    {
-    	leftsidedrivefront.set(leftdrivestick);
-    	leftsidedriveback.set(leftdrivestick);
-    }
-    public void runrightsidedrive(double rightdrivestick)
-    { 
-    	rightsidedriveback.set(rightdrivestick);
-    	rightsidedrivefront.set(rightdrivestick);
-    }
+public void runleftsidedrive(double leftdrivestick)
+{
+	leftsidedrivefront.set(leftdrivestick);
+	leftsidedriveback.set(leftdrivestick);
+}
+public void runrightsidedrive(double rightdrivestick)
+{ 
+	rightsidedriveback.set(rightdrivestick);
+	rightsidedrivefront.set(rightdrivestick);
+}
+public double angle()
+{
+	return gyro.getAngle();
+}
+public double rate ()
+{
+	return gyro.getRate();
+}
+/*
+public double getAverageDistance() {
+	return (getLeftEncoderDist() + getRightEncoderDist()) / 2;
+}
+*/
+/**
+ * Using both PID controllers (drive & gyro), the drivetrain will move to
+ * target at given speed and angle
+ *
+ * @param setPoint
+ *            The set point in inches
+ * @param speed
+ *            The speed (0.0 to 1.0)
+ * @param setAngle
+ *            The set angle in degrees
+ * @param epsilon
+ *            How close robot should be to target to consider reached
+ */
+// only need setpoint and tolerance to drive straight a distance
+
+public void driveStraight(double setPoint, double epsilon, double const_multiplier) {
+	double output = drivePID.calcPIDDrive(setPoint, getAverageDistance(), epsilon);
+
+	runleftsidedrive((output - (angle()*kP))*const_multiplier); 
+	runrightsidedrive((output + (angle()*kP))*const_multiplier);
+}
+
+private double getAverageDistance() {
+	// TODO Auto-generated method stub
+	return ((getLeftEncoderDist() + getRightEncoderDist())/2);
+}
+/**
+ * Used to move robot without a drive PID controller at a given speed, while
+ * at the angle given.
+ *
+ * @param setAngle
+ *            The set angle in degrees
+ * @param speed
+ *            The speed (-1.0 - 1.0)
+ */
+public void driveAngle(double setAngle, double multiplier) {
+	double outputcontroller = gyroPID.calcPID(setAngle, getGyroYaw(), 1);
+
+	runleftsidedrive((outputcontroller)*multiplier);
+	runrightsidedrive((outputcontroller*-1)*multiplier);
+}
+
+/**
+ * Using a PID controller, turns the robot to given angle with the given
+ * speed.
+ *
+ * @param setAngle
+ *            The set angle in degrees
+ * @param speed
+ *            The speed (0.0 - 1.0)
+ * @param epsilon
+ *            How close robot should be to target to consider reached
+ */
+// This is the same thing as driveAngle()
+public void turnDrive(double setAngle, double speed, double epsilon) {
+	double angle = gyroPID.calcPID(setAngle, getGyroYaw(), epsilon);
+
+	runleftsidedrive(angle * speed);
+	runrightsidedrive(angle * speed);
+}
+
+public void driveStraightWithoutSensors(double leftPower, double rightPower, double time) {
+	{
+	runleftsidedrive(leftPower);
+	runrightsidedrive(rightPower);
+	}
+	Timer.delay(time);
+}
+
+public void stop()
+{
+	this.runleftsidedrive(0);
+	this.runrightsidedrive(0);
+}
+
+public void pause(double time)
+{
+	{
+		this.runleftsidedrive(0);
+		this.runrightsidedrive(0);
+	}
+	Timer.delay(time);
+}
+
+public void reset() {
+	//resetEncoders();
+	resetGyro();
+}
+
+public static double getLeftCurrent() {
+	return leftsidedrivefront.getOutputCurrent() + leftsidedriveback.getOutputCurrent();
+}
+
+public static double getRightCurrent() {
+	return rightsidedrivefront.getOutputCurrent() + rightsidedriveback.getOutputCurrent();
+}
+
+/**
+ * This function returns the distance traveled from the left encoder in
+ * inches.
+ *
+ * @return Returns distance traveled by encoder in inches
+ */
+
+public double getLeftEncoderDist() {
+	return leftDriveEncoder.getDistance();
+}
+
+/**
+ * This function returns the distance traveled from the right encoder in
+ * inches.
+ *
+ * @return Returns distance traveled by encoder in inches
+ */
+
+public double getRightEncoderDist() {
+	return rightDriveEncoder.getDistance();
+}
+
+public void resetEncoders() {
+	leftDriveEncoder.reset();
+	rightDriveEncoder.reset();
+}
+
+
+public void calibrate_gyro()
+{
+	gyro.calibrate();
+}
+
+public void resetGyro() {
+	gyro.reset();
+}
+
+public AHRS getAhrs() {
+	return ahrs;
+}
+
+public double getGyroYaw() {
+    return ahrs.getAngle();
+}
+
+public void resetGyroYaw() {
+    ahrs.reset();
+}
+
 @Override
 protected void initDefaultCommand() {
 	// TODO Auto-generated method stub
