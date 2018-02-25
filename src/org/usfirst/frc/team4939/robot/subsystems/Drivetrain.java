@@ -125,11 +125,6 @@ public double rate ()
 {
 	return gyro.getRate();
 }
-/*
-public double getAverageDistance() {
-	return (getLeftEncoderDist() + getRightEncoderDist()) / 2;
-}
-*/
 /**
  * Using both PID controllers (drive & gyro), the drivetrain will move to
  * target at given speed and angle
@@ -217,6 +212,13 @@ public void pause(double time)
 public void reset() {
 	//resetEncoders();
 	resetGyro();
+	resetEncoders();
+}
+
+public void driveStraightTime(double leftpower, double rightpower)
+{
+	this.runleftsidedrive(leftpower - getGyroYaw()*kP);
+	this.runrightsidedrive(rightpower + getGyroYaw()*kP);
 }
 
 public static double getLeftCurrent() {

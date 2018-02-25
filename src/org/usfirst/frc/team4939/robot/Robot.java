@@ -19,6 +19,9 @@ import org.usfirst.frc.team4939.robot.commands.BaselineAuto;
 import org.usfirst.frc.team4939.robot.commands.CenterStartAuto;
 import org.usfirst.frc.team4939.robot.commands.LeftStartAuto;
 import org.usfirst.frc.team4939.robot.commands.RightStartAuto;
+import org.usfirst.frc.team4939.robot.commands.TimedCenterAuto;
+import org.usfirst.frc.team4939.robot.commands.TimedLeftAuto;
+import org.usfirst.frc.team4939.robot.commands.TimedRighttAuto;
 import org.usfirst.frc.team4939.robot.subsystems.Drivetrain;
 import org.usfirst.frc.team4939.robot.subsystems.IntakeSubsystem;
 import org.usfirst.frc.team4939.robot.subsystems.PlatformSubsystem;
@@ -56,6 +59,9 @@ public class Robot extends IterativeRobot {
 		m_chooser.addObject("Right Start", new RightStartAuto(direction));
 		m_chooser.addObject("Center Start", new CenterStartAuto(direction));
 		m_chooser.addObject("Left Start", new LeftStartAuto(direction));
+		m_chooser.addObject("Left Start Timed :(", new TimedLeftAuto(direction));
+		m_chooser.addObject("Right Start Timed :(", new TimedRighttAuto(direction));
+		m_chooser.addObject("Center Start Timed :(", new TimedCenterAuto(direction));
 	}
 
 	/**
