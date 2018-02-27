@@ -144,4 +144,11 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void testPeriodic() {
 	}
+	
+	public void updateSmartDashboard(){
+		SmartDashboard.putNumber("angle", Robot.dt.getGyroYaw());
+		SmartDashboard.putNumber("Left Current", Robot.dt.getLeftCurrent());
+		SmartDashboard.putNumber("Right Current", Robot.dt.getRightCurrent());
+		SmartDashboard.putString("GameData", gameData);
+	}
 }

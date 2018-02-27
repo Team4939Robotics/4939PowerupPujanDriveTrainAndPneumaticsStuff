@@ -221,11 +221,11 @@ public void driveStraightTime(double leftpower, double rightpower)
 	this.runrightsidedrive(rightpower + getGyroYaw()*kP);
 }
 
-public static double getLeftCurrent() {
+public double getLeftCurrent() {
 	return leftsidedrivefront.getOutputCurrent() + leftsidedriveback.getOutputCurrent();
 }
 
-public static double getRightCurrent() {
+public double getRightCurrent() {
 	return rightsidedrivefront.getOutputCurrent() + rightsidedriveback.getOutputCurrent();
 }
 
